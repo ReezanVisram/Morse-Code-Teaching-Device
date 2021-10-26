@@ -8,7 +8,7 @@
 // To run a particular example, you should remove the comment (//) in
 // front of exactly ONE of the following lines:
 
-#define BUTTON_BLINK
+// #define BUTTON_BLINK
 // #define LIGHT_SCHEDULER
 // #define TIME_RAND
 // #define KEYPAD
@@ -19,12 +19,15 @@
 // #define ROTARY_ENCODER
 // #define ANALOG
 // #define PWM
+// #define BUZZER
 
 #include <stdbool.h> // booleans, i.e. true and false
 #include <stdio.h>   // sprintf() function
 #include <stdlib.h>  // srand() and random() functions
 
 #include "ece198.h"
+
+void DisplayButton(uint16_t pin);
 
 int main(void)
 {
@@ -33,13 +36,15 @@ int main(void)
     // Peripherals (including GPIOs) are disabled by default to save power, so we
     // use the Reset and Clock Control registers to enable the GPIO peripherals that we're using.
 
-    __HAL_RCC_GPIOA_CLK_ENABLE(); // enable port A (for the on-board LED, for example)
-    __HAL_RCC_GPIOB_CLK_ENABLE(); // enable port B (for the rotary encoder inputs, for example)
-    __HAL_RCC_GPIOC_CLK_ENABLE(); // enable port C (for the on-board blue pushbutton, for example)
+    // __HAL_RCC_GPIOA_CLK_ENABLE(); // enable port A (for the on-board LED, for example)
+    // __HAL_RCC_GPIOB_CLK_ENABLE(); // enable port B (for the rotary encoder inputs, for example)
+    // __HAL_RCC_GPIOC_CLK_ENABLE(); // enable port C (for the on-board blue pushbutton, for example)
+
+    __HAL_RCC_GPIOC_CLK_ENABLE();
 
     // initialize the pins to be input, output, alternate function, etc...
 
-    InitializePin(GPIOA, GPIO_PIN_5, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, 0);  // on-board LED
+    // InitializePin(GPIOA, GPIO_PIN_5, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, 0);  // on-board LED
 
     // note: the on-board pushbutton is fine with the default values (no internal pull-up resistor
     // is required, since there's one on the board)
@@ -47,7 +52,22 @@ int main(void)
     // set up for serial communication to the host computer
     // (anything we write to the serial port will appear in the terminal (i.e. serial monitor) in VSCode)
 
+    InitializePin(GPIOC, GPIO_PIN_0, GPIO_MODE_INPUT, GPIO_PULLUP, 0);
+
     SerialSetup(9600);
+    // SerialPuts("\r\n\n");
+
+    // // uint32_t time = HAL_GetTick();
+
+    // // while (1) {
+    // //     DisplayButton(GPIO_PIN_0, time);
+    // //     SerialPuts("    \r");
+
+    // //     time = HAL_GetTick();
+    // // }
+
+    DisplayButton(GPIO_PIN_0);
+
 
     // as mentioned above, only one of the following code sections will be used
     // (depending on which of the #define statements at the top of this file has been uncommented)
@@ -237,6 +257,14 @@ int main(void)
     }
 #endif
 
+#ifdef BUZZER
+    InitializePin(GPIOA, GPIO_PIN_7, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, 0);
+    while (true)  {
+        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, GPIO_PIN_SET);
+    }
+    
+#endif
+
 #ifdef PWM
     // Use Pulse Width Modulation to fade the LED in and out.
     uint16_t period = 100, prescale = 16;
@@ -265,6 +293,23 @@ int main(void)
     }
 #endif
     return 0;
+}
+
+
+void DisplayButton(uint16_t pin) 
+{
+    uint32_t time;
+    while (true) {
+        while (HAL_GPIO_ReadPin(GPIOC, pin));
+        time = HAL_GetTick();
+
+        while (!HAL_GPIO_ReadPin(GPIOC, pin));
+
+        char buff[100];
+        sprintf(buff, "The button was pressed for %lu ms\r\n", (HAL_GetTick() - time));
+        SerialPuts(buff);
+    }
+    
 }
 
 // This function is called by the HAL once every millisecond
