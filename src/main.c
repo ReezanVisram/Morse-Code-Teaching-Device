@@ -6,8 +6,8 @@
 #include "ece198.h"
 #include "LiquidCrystal.h"
 
-#define DIT_MIN 65
-#define DIT_MAX 75
+#define DIT_MIN 85
+#define DIT_MAX 100
 #define DAH_MIN 195
 #define DAH_MAX 225
 #define SPACE_LETTER_MIN 65
@@ -61,6 +61,7 @@ int main(void)
 
 void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin) {
     uint32_t time;
+    uint32_t intendedTime;
     SerialPutc('X');
     while (true) {
         while (HAL_GPIO_ReadPin(GPIOC, buttonPin)) {
@@ -71,21 +72,21 @@ void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin) {
         while (!HAL_GPIO_ReadPin(GPIOC, buttonPin)) {
             HAL_GPIO_WritePin(GPIOC, buzzerPin, GPIO_PIN_SET);
         }
-
+        intendedTime = HAL_GetTick() - time;
         char buff1[100];
         char buff2[100];
-        sprintf(buff2, "%lu ms\r\n", (HAL_GetTick() - time));
+        sprintf(buff2, " Original time: %lu ms\r\n", (intendedTime));
+        SerialPuts(buff2);
         setCursor(0, 0);
         // print(buff);
-        if (((HAL_GetTick() - time) >= DIT_MIN) && ((HAL_GetTick() - time) <= DIT_MAX)) {
+        if (((intendedTime) >= DIT_MIN) && ((intendedTime) <= DIT_MAX)) {
             sprintf(buff1, "dit");
-        } else if (((HAL_GetTick() - time) >= DAH_MIN) && ((HAL_GetTick() - time) <= DAH_MAX)) {
+        } else if (((intendedTime) >= DAH_MIN) && ((intendedTime) <= DAH_MAX)) {
             sprintf(buff1, "dah");
         } else {
             sprintf(buff1, "NOO");
         }
 
-        SerialPuts(buff2);
         print(buff1);
     }
     
