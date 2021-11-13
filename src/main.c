@@ -65,6 +65,9 @@ void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin) {
             HAL_GPIO_WritePin(GPIOC, buzzerPin, GPIO_PIN_SET);
         }
         intendedTime = HAL_GetTick() - time;
+        char intendedTimeString[100];
+        sprintf(intendedTimeString, "Button was pressed for %lu ms \r\n", intendedTime);
+        SerialPuts(intendedTimeString);
         char buff[100];
         setCursor(0, 0);
 

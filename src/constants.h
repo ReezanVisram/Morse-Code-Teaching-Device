@@ -1,11 +1,11 @@
-#define DIT_MIN 65
-#define DIT_MAX 75
-#define DAH_MIN 195
-#define DAH_MAX 225
-#define SPACE_LETTER_MIN 65
-#define SPACE_LETTER_MAX 75
-#define SPACE_WORD_MIN 455
-#define SPACE_WORD_MAX 525
+#define DIT_MIN 70
+#define DIT_MAX 85
+#define DAH_MIN 210
+#define DAH_MAX 255
+#define SPACE_LETTER_MIN 70
+#define SPACE_LETTER_MAX 85
+#define SPACE_WORD_MIN 490
+#define SPACE_WORD_MAX 595
 
 const char morseLetters[26][4] = {{'.', '-'}, 
                             {'-', '.', '.'}, 
