@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>   
 #include <stdlib.h>  
+#include <string.h>
 
 #include "ece198.h"
 #include "LiquidCrystal.h"
@@ -10,7 +11,10 @@
 
 void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin);
 void Buzzer(uint16_t pin);
+char determineLetter(char* letter);
+void clearLetter(char* letter);
 void SysTick_Handler(void);
+
 
 int main(void)
 {
@@ -55,33 +59,86 @@ int main(void)
 void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin) {
     uint32_t time;
     uint32_t intendedTime;
+
+    uint32_t timeOfLastInput;
+
+    char currLetter[4];
+    int currIndex = 0;
+
     while (true) {
+        if (currIndex >= 4) {
+            char buff1[100];
+            sprintf(buff1, determineLetter(currLetter));
+            SerialPuts(buff1);
+            clearLetter(currLetter);
+            currIndex = 0;
+        }
+
+        // Button is not pressed
         while (HAL_GPIO_ReadPin(GPIOC, buttonPin)) {
             HAL_GPIO_WritePin(GPIOC, buzzerPin, 0);
         }
         time = HAL_GetTick();
 
+        if ((time-timeOfLastInput >= SPACE_LETTER_MIN) && (currIndex > 0)) {
+            char buff1[100];
+            sprintf(buff1, determineLetter(currLetter));
+            SerialPuts(buff1);
+            clearLetter(currLetter);
+            currIndex = 0;
+        }
+
+        // Button is pressed
         while (!HAL_GPIO_ReadPin(GPIOC, buttonPin)) {
             HAL_GPIO_WritePin(GPIOC, buzzerPin, GPIO_PIN_SET);
         }
         intendedTime = HAL_GetTick() - time;
-        char intendedTimeString[100];
-        sprintf(intendedTimeString, "Button was pressed for %lu ms \r\n", intendedTime);
-        SerialPuts(intendedTimeString);
         char buff[100];
         setCursor(0, 0);
 
+        char intendedTimeString[100];
+        sprintf(intendedTimeString, "Button was pressed for %lu ms \r\n", intendedTime);
+        SerialPuts(intendedTimeString);
+
         if (((intendedTime) >= DIT_MIN) && ((intendedTime) <= DIT_MAX)) {
+            currLetter[currIndex] = '.';
             sprintf(buff, "dit");
+            currIndex++;
         } else if (((intendedTime) >= DAH_MIN) && ((intendedTime) <= DAH_MAX)) {
+            currLetter[currIndex] = '-';
             sprintf(buff, "dah");
+            currIndex++;
         } else {
             sprintf(buff, "NOO");
         }
+        timeOfLastInput = HAL_GetTick();
 
         print(buff);
     }
     
+}
+
+char determineLetter(char* letter) {
+    char buff[100];
+    sprintf(buff, "Entered determine letter function\n");
+    SerialPuts(buff);
+    for (int i = 0; i < 26; i++) {
+        if (strncmp(morseLetters[i], letter, sizeof(morseLetters[i])) == 0) {
+            sprintf(buff, "The chosen letter was %c\n", (i+65));
+            SerialPuts(buff);
+            return (i+65);
+        }
+    }
+
+    
+
+    return 26;
+}
+
+void clearLetter(char* letter) {
+    for (int i = 0; i < 4; i++) {
+        letter[i] = '\0';
+    }
 }
 
 void Buzzer(uint16_t pin) 
