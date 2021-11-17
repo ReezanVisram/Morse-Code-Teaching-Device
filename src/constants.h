@@ -7,7 +7,7 @@
 #define SPACE_WORD_MIN 420
 #define SPACE_WORD_MAX 665
 
-const char morseLetters[26][4] = {{'.', '-'}, 
+const char morseLetters[26][5] = {{'.', '-'}, 
                             {'-', '.', '.', '.'}, 
                             {'-', '.', '-', '.'}, 
                             {'-', '.', '.'}, 

@@ -8,10 +8,10 @@
 #include "LiquidCrystal.h"
 #include "constants.h"
 
-
 void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin);
 void Buzzer(uint16_t pin);
 char determineLetter(char* letter);
+char* convertMorseToEnglish(char* word);
 void clearLetter(char* letter);
 void SysTick_Handler(void);
 
@@ -26,7 +26,7 @@ int main(void)
     InitializePin(GPIOC, GPIO_PIN_1, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, 0);
     LiquidCrystal(GPIOB, GPIO_PIN_9, GPIO_PIN_8, GPIO_PIN_6, GPIO_PIN_10, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_3);
 
-    
+    SerialPutc('\n');
 
     DisplayButton(GPIO_PIN_0, GPIO_PIN_1);
     // Buzzer(GPIO_PIN_1);
@@ -55,37 +55,36 @@ int main(void)
     return 0;
 }
 
-
 void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin) {
     uint32_t time;
     uint32_t intendedTime;
 
     uint32_t timeOfLastInput;
 
+
     char currLetter[4];
-    int currIndex = 0;
+    int currLetterIndex = 0;
+
+    char currPhrase[100] = "";
+    int currPhraseIndex = 0;
 
     while (true) {
-        if (currIndex >= 4) {
-            char buff1[100];
-            sprintf(buff1, determineLetter(currLetter));
-            SerialPuts(buff1);
-            clearLetter(currLetter);
-            currIndex = 0;
-        }
-
         // Button is not pressed
         while (HAL_GPIO_ReadPin(GPIOC, buttonPin)) {
             HAL_GPIO_WritePin(GPIOC, buzzerPin, 0);
         }
         time = HAL_GetTick();
 
-        if ((time-timeOfLastInput >= SPACE_LETTER_MIN) && (currIndex > 0)) {
-            char buff1[100];
-            sprintf(buff1, determineLetter(currLetter));
-            SerialPuts(buff1);
+        if (((time-timeOfLastInput >= SPACE_LETTER_MIN) && (currLetterIndex > 0)) || (currLetterIndex >= 4)) {
+            currPhrase[currPhraseIndex] = determineLetter(currLetter);
+            currPhraseIndex++;
             clearLetter(currLetter);
-            currIndex = 0;
+            currLetterIndex = 0;
+        }
+
+        if ((time-timeOfLastInput >= SPACE_WORD_MIN) && (time-timeOfLastInput <= SPACE_WORD_MAX)) {
+            currPhrase[currPhraseIndex] = ' ';
+            currPhraseIndex++;
         }
 
         // Button is pressed
@@ -96,43 +95,45 @@ void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin) {
         char buff[100];
         setCursor(0, 0);
 
-        char intendedTimeString[100];
-        sprintf(intendedTimeString, "Button was pressed for %lu ms \r\n", intendedTime);
-        SerialPuts(intendedTimeString);
-
         if (((intendedTime) >= DIT_MIN) && ((intendedTime) <= DIT_MAX)) {
-            currLetter[currIndex] = '.';
-            sprintf(buff, "dit");
-            currIndex++;
+            currLetter[currLetterIndex] = '.';
+            sprintf(buff, "dit\n");
+            currLetterIndex++;
         } else if (((intendedTime) >= DAH_MIN) && ((intendedTime) <= DAH_MAX)) {
-            currLetter[currIndex] = '-';
-            sprintf(buff, "dah");
-            currIndex++;
+            currLetter[currLetterIndex] = '-';
+            sprintf(buff, "dah\n");
+            currLetterIndex++;
         } else {
-            sprintf(buff, "NOO");
+            sprintf(buff, "None\n");
         }
         timeOfLastInput = HAL_GetTick();
 
-        print(buff);
+        print(currPhrase);
+        SerialPuts(buff);
     }
     
 }
 
 char determineLetter(char* letter) {
-    char buff[100];
-    sprintf(buff, "Entered determine letter function\n");
-    SerialPuts(buff);
     for (int i = 0; i < 26; i++) {
         if (strncmp(morseLetters[i], letter, sizeof(morseLetters[i])) == 0) {
-            sprintf(buff, "The chosen letter was %c\n", (i+65));
-            SerialPuts(buff);
             return (i+65);
         }
     }
-
-    
-
     return 26;
+}
+
+char* convertMorseToEnglish(char* word) {
+    char buff[100];
+    sprintf(buff, "Entered convert to word function\n");
+    SerialPuts(buff);
+    char* englishWord[100];
+
+    for (int i = 0; word[i] != '\0'; i++) {
+        englishWord[i] = determineLetter(word[i]);
+    }
+
+    return englishWord;
 }
 
 void clearLetter(char* letter) {
@@ -141,12 +142,6 @@ void clearLetter(char* letter) {
     }
 }
 
-void Buzzer(uint16_t pin) 
-{
-    while (true) {
-        HAL_GPIO_WritePin(GPIOC, pin, GPIO_PIN_SET);
-    }
-}
 
 
 // This function is called by the HAL once every millisecond
