@@ -8,25 +8,50 @@
 #include "LiquidCrystal.h"
 #include "constants.h"
 
+// Init Functions
+void startProgram(uint16_t buttonPin);
+
+// Message Functions
+void toStartMessage();
+void correctMessage();
+void incorrectMessage();
+
+// Output Functions
+void output(uint16_t buzzerPin);
+void lcdOutput();
+void buzzerOutput(uint16_t buzzerPin);
+void ledOutput(uint16_t red, uint16_t green, uint16_t blue);
+
+// Processing Functions
 void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin);
 void Buzzer(uint16_t pin);
-char determineLetter(char* letter);
+
+// Helper Functions
+char determineEnglishLetter(char* letter);
+char* determineMorseLetter(char letter);
 char* convertMorseToEnglish(char* word);
+void convertEnglishToMorse(char* phrase);
 void clearLetter(char* letter);
 void SysTick_Handler(void);
 
+// Global variables
+int questionIndex;
+char morseQuestion[100][5] = {};
 
 int main(void)
 {
     HAL_Init(); 
     __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
     SerialSetup(9600);
 
     InitializePin(GPIOC, GPIO_PIN_0, GPIO_MODE_INPUT, GPIO_PULLUP, 0);
     InitializePin(GPIOC, GPIO_PIN_1, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, 0);
+    InitializePin(GPIOA, GPIO_PIN_10 | GPIO_PIN_2 | GPIO_PIN_3, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, 0);
     LiquidCrystal(GPIOB, GPIO_PIN_9, GPIO_PIN_8, GPIO_PIN_6, GPIO_PIN_10, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_3);
 
-    SerialPutc('\n');
+    startProgram(GPIO_PIN_0);
+    output(GPIO_PIN_1);
 
     DisplayButton(GPIO_PIN_0, GPIO_PIN_1);
     // Buzzer(GPIO_PIN_1);
@@ -55,6 +80,54 @@ int main(void)
     return 0;
 }
 
+void startProgram(uint16_t buttonPin) {
+    while (HAL_GPIO_ReadPin(GPIOC, buttonPin)) {
+        toStartMessage();
+    }
+    clear();
+    srand(HAL_GetTick());
+    HAL_Delay(1000);
+    return;
+}
+
+void output(uint16_t buzzerPin) {
+    questionIndex = rand() % 5;
+    convertEnglishToMorse(questions[questionIndex]);
+
+    if (rand() % 2 == 0) {
+        lcdOutput();
+    } else {
+        buzzerOutput(buzzerPin);
+    }
+
+}
+
+void lcdOutput() {
+    for (int i = 0; morseQuestion[i][0] != '\0'; i++) {
+        print(morseQuestion[i]);
+        HAL_Delay(1500);
+        clear();
+    }
+}
+
+void buzzerOutput(uint16_t buzzerPin) {
+    for (int i = 0; morseQuestion[i][0] != '\0'; i++) {
+        for (int j = 0; morseQuestion[i][j] != '\0'; j++) {
+            if (morseQuestion[i][j] == '.') {
+                HAL_GPIO_WritePin(GPIOC, buzzerPin, GPIO_PIN_SET);
+                HAL_Delay(DIT_MIN);
+                HAL_GPIO_WritePin(GPIOC, buzzerPin, 0);
+            } else if (morseQuestion[i][j] == '-') {
+                HAL_GPIO_WritePin(GPIOC, buzzerPin, GPIO_PIN_SET);
+                HAL_Delay(DAH_MIN);
+                HAL_GPIO_WritePin(GPIOC, buzzerPin, 0);
+            }
+            HAL_Delay(SPACE_LETTER_MIN);
+        }
+        HAL_Delay(SPACE_WORD_MIN);
+    }
+}
+
 void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin) {
     uint32_t time;
     uint32_t intendedTime;
@@ -76,7 +149,9 @@ void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin) {
         time = HAL_GetTick();
 
         if (((time-timeOfLastInput >= SPACE_LETTER_MIN) && (currLetterIndex > 0)) || (currLetterIndex >= 4)) {
-            currPhrase[currPhraseIndex] = determineLetter(currLetter);
+            char english = determineEnglishLetter(currLetter);
+            currPhrase[currPhraseIndex] = english;
+            SerialPutc(english);
             currPhraseIndex++;
             clearLetter(currLetter);
             currLetterIndex = 0;
@@ -97,24 +172,17 @@ void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin) {
 
         if (((intendedTime) >= DIT_MIN) && ((intendedTime) <= DIT_MAX)) {
             currLetter[currLetterIndex] = '.';
-            sprintf(buff, "dit\n");
             currLetterIndex++;
         } else if (((intendedTime) >= DAH_MIN) && ((intendedTime) <= DAH_MAX)) {
             currLetter[currLetterIndex] = '-';
-            sprintf(buff, "dah\n");
             currLetterIndex++;
-        } else {
-            sprintf(buff, "None\n");
         }
         timeOfLastInput = HAL_GetTick();
-
-        print(currPhrase);
-        SerialPuts(buff);
     }
     
 }
 
-char determineLetter(char* letter) {
+char determineEnglishLetter(char* letter) {
     for (int i = 0; i < 26; i++) {
         if (strncmp(morseLetters[i], letter, sizeof(morseLetters[i])) == 0) {
             return (i+65);
@@ -123,17 +191,32 @@ char determineLetter(char* letter) {
     return 26;
 }
 
+char* determineMorseLetter(char letter) {
+    for (int i = 0; i < 26; i++) {
+        if (letter == englishLetters[i]) {
+            return morseLetters[i];
+        }
+    }
+
+    return spaceArr;
+}
+
 char* convertMorseToEnglish(char* word) {
-    char buff[100];
-    sprintf(buff, "Entered convert to word function\n");
-    SerialPuts(buff);
     char* englishWord[100];
 
     for (int i = 0; word[i] != '\0'; i++) {
-        englishWord[i] = determineLetter(word[i]);
+        englishWord[i] = determineEnglishLetter(word[i]);
     }
 
     return englishWord;
+}
+
+void convertEnglishToMorse(char* phrase) {
+    for (int i = 0; phrase[i] != '\0'; i++) {
+        strcpy(morseQuestion[i], determineMorseLetter(phrase[i]));
+    }
+
+    return morseQuestion;
 }
 
 void clearLetter(char* letter) {
@@ -149,4 +232,11 @@ void SysTick_Handler(void)
 {
     HAL_IncTick(); // tell HAL that a new tick has happened
     // we can do other things in here too if we need to, but be careful
+}
+
+void toStartMessage() {
+    setCursor(0, 0);
+    print("To start hold");
+    setCursor(0, 1);
+    print("the button");
 }

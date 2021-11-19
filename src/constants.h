@@ -35,4 +35,14 @@ const char morseLetters[26][5] = {{'.', '-'},
                             {'-', '-', '.', '.'}
                             };
 
-const char englishLetters[26] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
+const char englishLetters[26] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
+const char spaceArr[5] = {32, 32, 32, 32};
+
+
+const char questions[10][100] = {
+    {"WHY DID THE CHICKEN CROSS THE ROAD"},
+    {"WHAT IS FOUR PLUS FOUR"},
+    {"WHAT IS THE NAME OF THIS DEVICE"},
+    {"HI HOW IS IT GOING"},
+    {"WHY DO MUSHROOMS GET INVITIED TO ALL THE PARTIES"},
+};
