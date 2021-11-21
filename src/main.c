@@ -297,7 +297,7 @@ void correctMessage(uint16_t redPin, uint16_t greenPin, uint16_t bluePin) {
     setCursor(0, 0);
     print("Correct! Please");
     setCursor(0, 1);
-    print("press reset to go again");
+    print(" reset to go again");
 
     HAL_GPIO_WritePin(GPIOA, redPin, 0);
     HAL_GPIO_WritePin(GPIOA, greenPin, 1);
@@ -309,7 +309,7 @@ void incorrectMessage(uint16_t redPin, uint16_t greenPin, uint16_t bluePin) {
     setCursor(0, 0);
     print("Incorrect :(");
     setCursor(0, 1);
-    print("Press reset to go again");
+    print("Reset to retry");
 
     HAL_GPIO_WritePin(GPIOA, redPin, 1);
     HAL_GPIO_WritePin(GPIOA, greenPin, 0);
