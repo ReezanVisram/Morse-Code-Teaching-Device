@@ -13,8 +13,8 @@ void startProgram(uint16_t buttonPin);
 
 // Message Functions
 void toStartMessage();
-void correctMessage();
-void incorrectMessage();
+void correctMessage(uint16_t redPin, uint16_t greenPin, uint16_t bluePin);
+void incorrectMessage(uint16_t redPin, uint16_t greenPin, uint16_t bluePin);
 
 // Output Functions
 void output(uint16_t buzzerPin, uint16_t redPin, uint16_t greenPin, uint16_t bluePin);
@@ -37,6 +37,8 @@ void SysTick_Handler(void);
 // Global variables
 int questionIndex;
 char morseQuestion[100][5] = {};
+char expectedAnswer[100];
+char userAnswer[100] = {};
 
 int main(void)
 {
@@ -54,6 +56,15 @@ int main(void)
     output(GPIO_PIN_1, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7);
 
     DisplayButton(GPIO_PIN_0, GPIO_PIN_1);
+
+    if (strcmp(expectedAnswer, userAnswer) == 1) {
+        correctMessage(GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7);
+    } else {
+        incorrectMessage(GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7);
+    }
+
+    while (1);
+
     // Buzzer(GPIO_PIN_1);
 
 
@@ -93,6 +104,7 @@ void startProgram(uint16_t buttonPin) {
 void output(uint16_t buzzerPin, uint16_t redPin, uint16_t greenPin, uint16_t bluePin) {
     questionIndex = rand() % 5;
     convertEnglishToMorse(questions[questionIndex]);
+    strcpy(expectedAnswer, answers[questionIndex]);
 
     int outputMode = rand() % 3;
 
@@ -164,10 +176,10 @@ void ledOutput(uint16_t redPin, uint16_t greenPin, uint16_t bluePin) {
 }
 
 void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin) {
-    uint32_t time;
-    uint32_t intendedTime;
+    uint32_t time = 0;
+    uint32_t intendedTime = 0;
 
-    uint32_t timeOfLastInput;
+    uint32_t timeOfLastInput = 0;
 
 
     char currLetter[4];
@@ -195,6 +207,11 @@ void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin) {
         if ((time-timeOfLastInput >= SPACE_WORD_MIN) && (time-timeOfLastInput <= SPACE_WORD_MAX)) {
             currPhrase[currPhraseIndex] = ' ';
             currPhraseIndex++;
+        }
+
+        if ((time-timeOfLastInput >= END_TIME) && (currPhrase[10] != '\0')) {
+            strcpy(userAnswer, currPhrase);
+            break;
         }
 
         // Button is pressed
@@ -261,7 +278,6 @@ void clearLetter(char* letter) {
 }
 
 
-
 // This function is called by the HAL once every millisecond
 void SysTick_Handler(void)
 {
@@ -274,4 +290,28 @@ void toStartMessage() {
     print("To start hold");
     setCursor(0, 1);
     print("the button");
+}
+
+void correctMessage(uint16_t redPin, uint16_t greenPin, uint16_t bluePin) {
+    clear();
+    setCursor(0, 0);
+    print("Correct! Please");
+    setCursor(0, 1);
+    print("press reset to go again");
+
+    HAL_GPIO_WritePin(GPIOA, redPin, 0);
+    HAL_GPIO_WritePin(GPIOA, greenPin, 1);
+    HAL_GPIO_WritePin(GPIOA, bluePin, 0);
+}
+
+void incorrectMessage(uint16_t redPin, uint16_t greenPin, uint16_t bluePin) {
+    clear();
+    setCursor(0, 0);
+    print("Incorrect :(");
+    setCursor(0, 1);
+    print("Press reset to go again");
+
+    HAL_GPIO_WritePin(GPIOA, redPin, 1);
+    HAL_GPIO_WritePin(GPIOA, greenPin, 0);
+    HAL_GPIO_WritePin(GPIOA, bluePin, 0);
 }
