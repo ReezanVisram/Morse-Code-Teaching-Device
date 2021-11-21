@@ -17,10 +17,10 @@ void correctMessage();
 void incorrectMessage();
 
 // Output Functions
-void output(uint16_t buzzerPin);
+void output(uint16_t buzzerPin, uint16_t redPin, uint16_t greenPin, uint16_t bluePin);
 void lcdOutput();
 void buzzerOutput(uint16_t buzzerPin);
-void ledOutput(uint16_t red, uint16_t green, uint16_t blue);
+void ledOutput(uint16_t redPin, uint16_t greenPin, uint16_t bluePin);
 
 // Processing Functions
 void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin);
@@ -47,11 +47,11 @@ int main(void)
 
     InitializePin(GPIOC, GPIO_PIN_0, GPIO_MODE_INPUT, GPIO_PULLUP, 0);
     InitializePin(GPIOC, GPIO_PIN_1, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, 0);
-    InitializePin(GPIOA, GPIO_PIN_10 | GPIO_PIN_2 | GPIO_PIN_3, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, 0);
+    InitializePin(GPIOA, GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, 0);
     LiquidCrystal(GPIOB, GPIO_PIN_9, GPIO_PIN_8, GPIO_PIN_6, GPIO_PIN_10, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_3);
 
     startProgram(GPIO_PIN_0);
-    output(GPIO_PIN_1);
+    output(GPIO_PIN_1, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7);
 
     DisplayButton(GPIO_PIN_0, GPIO_PIN_1);
     // Buzzer(GPIO_PIN_1);
@@ -90,17 +90,26 @@ void startProgram(uint16_t buttonPin) {
     return;
 }
 
-void output(uint16_t buzzerPin) {
+void output(uint16_t buzzerPin, uint16_t redPin, uint16_t greenPin, uint16_t bluePin) {
     questionIndex = rand() % 5;
     convertEnglishToMorse(questions[questionIndex]);
 
-    if (rand() % 2 == 0) {
+    int outputMode = rand() % 3;
+
+    if (outputMode == 0) {
         lcdOutput();
-    } else {
+    } else if (outputMode == 1) {
         buzzerOutput(buzzerPin);
+    } else {
+        ledOutput(redPin, greenPin, bluePin);
     }
 
+    HAL_GPIO_WritePin(GPIOA, redPin, 1);
+    HAL_GPIO_WritePin(GPIOA, greenPin, 1);
+    HAL_GPIO_WritePin(GPIOA, bluePin, 0);
+
 }
+
 
 void lcdOutput() {
     for (int i = 0; morseQuestion[i][0] != '\0'; i++) {
@@ -121,6 +130,32 @@ void buzzerOutput(uint16_t buzzerPin) {
                 HAL_GPIO_WritePin(GPIOC, buzzerPin, GPIO_PIN_SET);
                 HAL_Delay(DAH_MIN);
                 HAL_GPIO_WritePin(GPIOC, buzzerPin, 0);
+            }
+            HAL_Delay(SPACE_LETTER_MIN);
+        }
+        HAL_Delay(SPACE_WORD_MIN);
+    }
+}
+
+void ledOutput(uint16_t redPin, uint16_t greenPin, uint16_t bluePin) {
+    for (int i = 0; morseQuestion[i][0] != '\0'; i++) {
+        for (int j = 0; morseQuestion[i][j] != '\0'; j++) {
+            if (morseQuestion[i][j] == '.') {
+                HAL_GPIO_WritePin(GPIOA, redPin, 1);
+                HAL_GPIO_WritePin(GPIOA, greenPin, 1);
+                HAL_GPIO_WritePin(GPIOA, bluePin, 1);
+                HAL_Delay(DAH_MIN);
+                HAL_GPIO_WritePin(GPIOA, redPin, 0);
+                HAL_GPIO_WritePin(GPIOA, greenPin, 0);
+                HAL_GPIO_WritePin(GPIOA, bluePin, 0);
+            } else if (morseQuestion[i][j] == '-') {
+                HAL_GPIO_WritePin(GPIOA, redPin, 1);
+                HAL_GPIO_WritePin(GPIOA, greenPin, 1);
+                HAL_GPIO_WritePin(GPIOA, bluePin, 1);
+                HAL_Delay(DAH_MAX);
+                HAL_GPIO_WritePin(GPIOA, redPin, 0);
+                HAL_GPIO_WritePin(GPIOA, greenPin, 0);
+                HAL_GPIO_WritePin(GPIOA, bluePin, 0);
             }
             HAL_Delay(SPACE_LETTER_MIN);
         }

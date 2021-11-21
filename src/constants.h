@@ -6,6 +6,7 @@
 #define SPACE_LETTER_MAX 300
 #define SPACE_WORD_MIN 420
 #define SPACE_WORD_MAX 665
+#define END_TIME 2000
 
 const char morseLetters[26][5] = {{'.', '-'}, 
                             {'-', '.', '.', '.'}, 
@@ -45,4 +46,12 @@ const char questions[10][100] = {
     {"WHAT IS THE NAME OF THIS DEVICE"},
     {"HI HOW IS IT GOING"},
     {"WHY DO MUSHROOMS GET INVITIED TO ALL THE PARTIES"},
+};
+
+const char answers[10][100] = {
+    {"TO GET TO THE OTHER SIDE"},
+    {"EIGHT"},
+    {"MORSE CODE TEACHING DEVICE"},
+    {"GOOD HOW ARE YOU"},
+    {"THEY ARE FUNGIS"}
 };
