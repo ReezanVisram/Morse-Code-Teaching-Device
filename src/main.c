@@ -57,7 +57,7 @@ int main(void)
 
     DisplayButton(GPIO_PIN_0, GPIO_PIN_1);
 
-    if (strcmp(expectedAnswer, userAnswer) == 1) {
+    if (strcmp(expectedAnswer, userAnswer) == 0) {
         correctMessage(GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7);
     } else {
         incorrectMessage(GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7);
@@ -102,9 +102,10 @@ void startProgram(uint16_t buttonPin) {
 }
 
 void output(uint16_t buzzerPin, uint16_t redPin, uint16_t greenPin, uint16_t bluePin) {
-    questionIndex = rand() % 5;
+    questionIndex = rand() % 6;
     convertEnglishToMorse(questions[questionIndex]);
     strcpy(expectedAnswer, answers[questionIndex]);
+    SerialPuts(questions[questionIndex]);
 
     int outputMode = rand() % 3;
 
@@ -182,7 +183,7 @@ void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin) {
     uint32_t timeOfLastInput = 0;
 
 
-    char currLetter[4];
+    char currLetter[4] = "";
     int currLetterIndex = 0;
 
     char currPhrase[100] = "";
@@ -209,7 +210,7 @@ void DisplayButton(uint16_t buttonPin, uint16_t buzzerPin) {
             currPhraseIndex++;
         }
 
-        if ((time-timeOfLastInput >= END_TIME) && (currPhrase[10] != '\0')) {
+        if ((time-timeOfLastInput >= END_TIME) && (currPhrase[0] != '\0')) {
             strcpy(userAnswer, currPhrase);
             break;
         }
@@ -295,9 +296,9 @@ void toStartMessage() {
 void correctMessage(uint16_t redPin, uint16_t greenPin, uint16_t bluePin) {
     clear();
     setCursor(0, 0);
-    print("Correct! Please");
+    print("Correct! Reset");
     setCursor(0, 1);
-    print(" reset to go again");
+    print("to go again");
 
     HAL_GPIO_WritePin(GPIOA, redPin, 0);
     HAL_GPIO_WritePin(GPIOA, greenPin, 1);

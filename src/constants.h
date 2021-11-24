@@ -8,6 +8,7 @@
 #define SPACE_WORD_MAX 665
 #define END_TIME 2000
 
+
 const char morseLetters[26][5] = {{'.', '-'}, 
                             {'-', '.', '.', '.'}, 
                             {'-', '.', '-', '.'}, 
@@ -41,6 +42,7 @@ const char spaceArr[5] = {32, 32, 32, 32};
 
 
 const char questions[10][100] = {
+    {"PLEASE ENTER THE LETTER T"},
     {"WHY DID THE CHICKEN CROSS THE ROAD"},
     {"WHAT IS FOUR PLUS FOUR"},
     {"WHAT IS THE NAME OF THIS DEVICE"},
@@ -49,6 +51,7 @@ const char questions[10][100] = {
 };
 
 const char answers[10][100] = {
+    {"T"},
     {"TO GET TO THE OTHER SIDE"},
     {"EIGHT"},
     {"MORSE CODE TEACHING DEVICE"},
